@@ -1,8 +1,13 @@
 # Undelete Messages — build the release APK and publish it as a GitHub Release.
 #
 # This file goes to: .github/workflows/release.yml  (replace the whole file)
-# It is the ONLY code the release flow needs. The two secrets below are values
-# from the nuc, not code — add them once under
+# Structure mirrors the AppClone workflow that ran green (Oct 2026):
+# setup-android v4 with packages 'platform-tools' only, SDK 35 installed by
+# sdkmanager in its own step, JDK 17, gradle --no-daemon --stacktrace,
+# 30-minute timeout, and a release step that fails loudly if the APK file
+# is missing instead of publishing an empty release.
+#
+# The two secrets are values from the nuc, not code — add them once under
 # Settings > Secrets and variables > Actions > New repository secret:
 #   ECOSYSTEM_STORE_PASS : output of  cat ~/keystores/notify-ecosystem.pass
 #   KEYSTORE_B64         : output of  base64 -w0 ~/keystores/notify-ecosystem.jks
@@ -25,21 +30,28 @@ permissions:
 
 jobs:
   build:
+    name: Build release APK
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    timeout-minutes: 30
 
-      - name: Set up JDK 21
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "17"
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
+        with:
+          packages: "platform-tools"
 
-      - name: Install SDK platform 35 and build-tools
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: Install Android API 35
+        run: |
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: Set up Gradle 8.10.2
         uses: gradle/actions/setup-gradle@v4
@@ -49,21 +61,28 @@ jobs:
       - name: Restore the ecosystem keystore
         env:
           KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          ECOSYSTEM_STORE_PASS: ${{ secrets.ECOSYSTEM_STORE_PASS }}
         run: |
+          if [ -z "$KEYSTORE_B64" ]; then echo "::error::Secret KEYSTORE_B64 is missing or empty"; exit 1; fi
+          if [ -z "$ECOSYSTEM_STORE_PASS" ]; then echo "::error::Secret ECOSYSTEM_STORE_PASS is missing or empty"; exit 1; fi
           mkdir -p "$HOME/keystores"
           echo "$KEYSTORE_B64" | base64 -d > "$HOME/keystores/notify-ecosystem.jks"
+          ls -la "$HOME/keystores/"
 
       - name: Build the release APK
         env:
           ECOSYSTEM_STORE_PASS: ${{ secrets.ECOSYSTEM_STORE_PASS }}
-        run: gradle :core:assembleRelease --console=plain
+        run: gradle --no-daemon :core:assembleRelease --stacktrace
 
       - name: Stage the APK under its stable download name
+        if: success()
         run: cp core/build/outputs/apk/release/core-release.apk Undelete-Messages.apk
 
       - name: Publish the GitHub release
+        if: success()
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.tag || github.ref_name }}
           name: Undelete Messages ${{ inputs.tag || github.ref_name }}
           files: Undelete-Messages.apk
+          fail_on_unmatched_files: true
