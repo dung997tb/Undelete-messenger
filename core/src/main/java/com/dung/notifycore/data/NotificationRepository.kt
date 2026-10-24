@@ -373,7 +373,7 @@ class NotificationRepository(context: Context) {
                 "id", "sbn_key", "package_name", "conversation", "sender", "text",
                 "msg_time", "received_at", "vanished_at"
             ),
-            sel, args, null, null, "msg_time ASC", limit.toString()
+            sel, args, null, null, "msg_time DESC, id DESC", limit.toString()
         ).use { c -> while (c.moveToNext()) out.add(msgFrom(c)) }
         return out
     }

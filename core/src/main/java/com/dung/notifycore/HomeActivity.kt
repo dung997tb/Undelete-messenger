@@ -274,7 +274,7 @@ class HomeActivity : AppCompatActivity() {
                 text = s.latestText ?: ""
                 textSize = 12.5f
                 maxLines = 1
-                if (fromMessages && s.latestVanished) setTextColor(Ui.RED_DARK) else setTextColor(Ui.sub(ctx))
+                setTextColor(Ui.sub(ctx))
             })
         }
         row.addView(mid)
@@ -288,32 +288,18 @@ class HomeActivity : AppCompatActivity() {
                 setTextColor(Ui.sub(ctx))
                 gravity = Gravity.END
             })
-            if (fromMessages && s.latestVanished) {
-                addView(TextView(ctx).apply {
-                    text = getString(R.string.chip_recalled)
-                    textSize = 9.5f
-                    typeface = Typeface.DEFAULT_BOLD
-                    setTextColor(Color_white)
-                    background = Ui.rounded(Ui.RED, 6f, ctx)
-                    setPadding(Ui.dp(ctx, 6f), Ui.dp(ctx, 2f), Ui.dp(ctx, 6f), Ui.dp(ctx, 2f))
-                    val lp2 = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-                    lp2.topMargin = Ui.dp(ctx, 3f)
-                    layoutParams = lp2
-                })
-            } else {
-                addView(TextView(ctx).apply {
-                    text = Ui.fmtCount(s.messageCount.toLong())
-                    textSize = 10.5f
-                    typeface = Typeface.DEFAULT_BOLD
-                    setTextColor(Color_white)
-                    gravity = Gravity.CENTER
-                    background = Ui.rounded(Ui.ACCENT, 10f, ctx)
-                    setPadding(Ui.dp(ctx, 6f), Ui.dp(ctx, 1f), Ui.dp(ctx, 6f), Ui.dp(ctx, 1f))
-                    val lp2 = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-                    lp2.topMargin = Ui.dp(ctx, 3f)
-                    layoutParams = lp2
-                })
-            }
+            addView(TextView(ctx).apply {
+                text = Ui.fmtCount(s.messageCount.toLong())
+                textSize = 10.5f
+                typeface = Typeface.DEFAULT_BOLD
+                setTextColor(Color_white)
+                gravity = Gravity.CENTER
+                background = Ui.rounded(Ui.ACCENT, 10f, ctx)
+                setPadding(Ui.dp(ctx, 6f), Ui.dp(ctx, 1f), Ui.dp(ctx, 6f), Ui.dp(ctx, 1f))
+                val lp2 = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                lp2.topMargin = Ui.dp(ctx, 3f)
+                layoutParams = lp2
+            })
         }
         row.addView(meta)
         return row

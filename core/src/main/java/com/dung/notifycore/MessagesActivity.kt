@@ -136,7 +136,7 @@ class MessagesActivity : AppCompatActivity() {
                 "app" -> {
                     val convs = repo.conversationsFor(pkg!!)
                     if (convs.isNotEmpty()) {
-                        val previews = convs.map { c -> c to repo.messagesFor(pkg!!, c, 500).lastOrNull() }
+                        val previews = convs.map { c -> c to repo.messagesFor(pkg!!, c, 500).firstOrNull() }
                         runOnUiThread { renderConversations(previews) }
                     } else {
                         val notifs = repo.notificationsFor(pkg!!, 200)
@@ -220,7 +220,7 @@ class MessagesActivity : AppCompatActivity() {
                         text = latest?.text ?: ""
                         textSize = 12.5f
                         maxLines = 1
-                        if (latest?.vanishedAt != null) setTextColor(Ui.RED_DARK) else setTextColor(Ui.sub(this@MessagesActivity))
+                        setTextColor(Ui.sub(this@MessagesActivity))
                     })
                 }
                 addView(texts)
@@ -276,7 +276,7 @@ class MessagesActivity : AppCompatActivity() {
 
     private fun messageCard(m: StoredMessage, showApp: Boolean): View {
         val ctx = this
-        val vanished = m.vanishedAt != null
+        val vanished = false // 1.3.2: recall label removed by request; vanished_at still recorded
         val outer = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)

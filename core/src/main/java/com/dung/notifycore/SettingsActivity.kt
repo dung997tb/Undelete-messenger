@@ -171,19 +171,6 @@ class SettingsActivity : AppCompatActivity() {
         })
         box.addView(g2)
 
-        val g2b = groupCard()
-        g2b.addView(row(getString(R.string.settings_clear_flags), null, red = true) {
-            AlertDialog.Builder(this)
-                .setTitle(R.string.settings_clear_flags)
-                .setMessage(R.string.settings_clear_flags_desc)
-                .setNegativeButton(R.string.cancel, null)
-                .setPositiveButton(R.string.delete) { _, _ ->
-                    io.execute { repo.clearVanishedFlags(); runOnUiThread { render() } }
-                }
-                .show()
-        })
-        box.addView(g2b)
-
         box.addView(sectionLabel(getString(R.string.sec_backup)))
         val g4 = groupCard()
         g4.addView(row(getString(R.string.export_backup), null, chevron = true) {
