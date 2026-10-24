@@ -13,7 +13,7 @@ val ecosystemPass: String = System.getenv("ECOSYSTEM_STORE_PASS")
 
 android {
     namespace = "com.dung.notifycore"
-    compileSdk = 35
+    compileSdk = 36
 
     signingConfigs {
         create("ecosystem") {
@@ -27,9 +27,9 @@ android {
     defaultConfig {
         applicationId = "com.dung.notifycore"
         minSdk = 29
-        targetSdk = 35
-        versionCode = 15
-        versionName = "1.3.6"
+        targetSdk = 36
+        versionCode = 16
+        versionName = "1.4.0"
     }
 
     buildTypes {
