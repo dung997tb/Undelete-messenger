@@ -8,6 +8,7 @@ import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.Switch
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -123,21 +124,49 @@ class SettingsActivity : AppCompatActivity() {
             startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
         })
         val smsGranted = SmsSync.hasReadPermission(this)
-        g1.addView(row(
-            getString(R.string.sms_perm_label),
-            if (smsGranted) getString(R.string.granted) else getString(R.string.not_granted),
-            chevron = !smsGranted
-        ) {
-            if (!SmsSync.hasReadPermission(this@SettingsActivity)) {
-                requestPermissions(
-                    arrayOf(
-                        android.Manifest.permission.READ_SMS,
-                        android.Manifest.permission.RECEIVE_SMS
-                    ),
-                    77
-                )
-            }
-        })
+        val smsRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(Ui.dp(this@SettingsActivity, 14f), Ui.dp(this@SettingsActivity, 12f), Ui.dp(this@SettingsActivity, 14f), Ui.dp(this@SettingsActivity, 12f))
+            addView(LinearLayout(this@SettingsActivity).apply {
+                orientation = LinearLayout.VERTICAL
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+                addView(TextView(this@SettingsActivity).apply {
+                    text = getString(R.string.sms_save_label)
+                    textSize = 14f
+                    setTextColor(Ui.text(this@SettingsActivity))
+                })
+                addView(TextView(this@SettingsActivity).apply {
+                    text = getString(if (smsGranted) R.string.granted else R.string.sms_save_hint)
+                    textSize = 12f
+                    setTextColor(Ui.sub(this@SettingsActivity))
+                })
+            })
+            addView(Switch(this@SettingsActivity).apply {
+                isChecked = smsGranted && CoreSettings.smsEnabled(this@SettingsActivity)
+                setOnCheckedChangeListener { _, checked ->
+                    if (checked) {
+                        if (SmsSync.hasReadPermission(this@SettingsActivity)) {
+                            CoreSettings.setSmsEnabled(this@SettingsActivity, true)
+                            val repo = CoreRuntime.repo(this@SettingsActivity)
+                            io.execute { SmsSync.syncFull(this@SettingsActivity, repo) }
+                        } else {
+                            requestPermissions(
+                                arrayOf(
+                                    android.Manifest.permission.READ_SMS,
+                                    android.Manifest.permission.RECEIVE_SMS
+                                ),
+                                77
+                            )
+                        }
+                    } else {
+                        CoreSettings.setSmsEnabled(this@SettingsActivity, false)
+                    }
+                    window.decorView.post { render() }
+                }
+            })
+        }
+        g1.addView(smsRow)
         box.addView(g1)
         box.addView(TextView(this).apply {
             text = getString(R.string.restricted_hint)
@@ -216,11 +245,12 @@ class SettingsActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 77) {
-            render()
             if (SmsSync.hasReadPermission(this)) {
+                CoreSettings.setSmsEnabled(this, true)
                 val repo = CoreRuntime.repo(this)
                 io.execute { SmsSync.syncFull(this@SettingsActivity, repo) }
             }
+            render()
         }
     }
 

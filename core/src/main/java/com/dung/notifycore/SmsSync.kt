@@ -61,7 +61,7 @@ object SmsSync {
     }
 
     private fun sync(ctx: Context, repo: NotificationRepository, limit: Int) {
-        if (!hasReadPermission(ctx)) return
+        if (!hasReadPermission(ctx) || !CoreSettings.smsEnabled(ctx)) return
         val pkg = defaultSmsPackage(ctx) ?: return
         val items = queryInbox(ctx, limit)
         if (items.isNotEmpty()) repo.storeSmsMessages(pkg, items)

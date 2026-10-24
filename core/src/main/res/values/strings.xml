@@ -78,7 +78,7 @@
     <string name="clear_selection">Bỏ chọn</string>
     <string name="selected_summary">Đang chọn %1$d trong %2$d ứng dụng</string>
     <string name="backup_selected">Sao lưu phần đã chọn</string>
-    <string name="ob_step1">Bước 1/3: Quyền truy cập thông báo</string>
+    <string name="ob_step1">Bước 1/2: Quyền truy cập thông báo</string>
     <string name="ob_step2">Bước 2/3: Quyền tin nhắn SMS</string>
     <string name="ob_notif_title">Bật quyền truy cập thông báo</string>
     <string name="ob_notif_desc">Ứng dụng cần quyền truy cập thông báo để lưu mọi tin nhắn mới ngay khi chúng đến, kể cả khi người gửi thu hồi sau đó.</string>
@@ -90,9 +90,11 @@
     <string name="ob_sms_desc">Để lưu cả tin nhắn văn bản và mã OTP ngân hàng, ứng dụng cần quyền đọc SMS. Quyền này không bắt buộc — bạn có thể bỏ qua và bật sau trong Cài đặt.</string>
     <string name="ob_skip">BỎ QUA VÀ TIẾP TỤC</string>
     <string name="ob_sms_done">Bạn đã bật quyền SMS thành công. Bấm Tiếp tục để sang bước cuối.</string>
-    <string name="ob_step3">Bước 3/3: Tối ưu pin</string>
+    <string name="ob_step3">Bước 2/2: Tối ưu pin</string>
     <string name="ob_batt_title">Tắt tối ưu pin cho ứng dụng</string>
     <string name="ob_batt_desc">Để hệ thống không tắt ứng dụng khi chạy nền, hãy cho phép ứng dụng bỏ qua tối ưu pin. Riêng máy Xiaomi/MIUI cần thêm 2 việc: bật Tự khởi chạy cho ứng dụng (nút bên dưới mở đúng màn hình đó) và đặt Tiết kiệm pin = Không hạn chế trong Thông tin ứng dụng.</string>
     <string name="ob_batt_details">MỞ THÔNG TIN ỨNG DỤNG</string>
     <string name="ob_batt_done">Ứng dụng được chạy nền không bị giới hạn. Bấm Tiếp tục để bắt đầu.</string>
+    <string name="sms_save_label">Lưu tin nhắn SMS</string>
+    <string name="sms_save_hint">Khi bật, app sẽ xin quyền đọc SMS để lưu tin nhắn và mã OTP.</string>
 </resources>

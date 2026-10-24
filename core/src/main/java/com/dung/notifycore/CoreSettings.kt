@@ -130,4 +130,23 @@ object CoreSettings {
         prefs(ctx).edit().putBoolean(K_ONBOARDING, done).apply()
     }
 
+
+    // ---- SMS capture toggle (1.3.6) ----
+    private const val K_SMS_ENABLED = "sms_enabled"
+
+    /**
+     * Default preserves pre-toggle behavior: on iff the SMS permission was
+     * already granted. Fresh installs start off; the Settings switch is the
+     * opt-in, and it requests the permission at the moment it is flipped on.
+     */
+    fun smsEnabled(ctx: Context): Boolean {
+        val pr = prefs(ctx)
+        return if (pr.contains(K_SMS_ENABLED)) pr.getBoolean(K_SMS_ENABLED, false)
+               else SmsSync.hasReadPermission(ctx)
+    }
+
+    fun setSmsEnabled(ctx: Context, enabled: Boolean) {
+        prefs(ctx).edit().putBoolean(K_SMS_ENABLED, enabled).apply()
+    }
+
 }

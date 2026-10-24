@@ -16,14 +16,13 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
-import java.util.concurrent.Executors
 
 /**
  * First-run onboarding (1.3.3, modeled on Unseen Messenger's flow;
- * step 3 added in 1.3.4):
+ * battery step added in 1.3.4; SMS step REMOVED in 1.3.6 — SMS is now an
+ * opt-in toggle in Settings that requests its permission when flipped on):
  * Step 1 — notification access (the app's core permission).
- * Step 2 — SMS permission (optional; skippable, also available in Settings).
- * Step 3 — battery-optimization exemption (optional; skippable). On Xiaomi
+ * Step 2 — battery-optimization exemption (optional; skippable). On Xiaomi
  *          the primary button opens MIUI's Autostart screen instead (MIUI
  *          kills background apps independently of the Android whitelist),
  *          with a secondary link to the App info page for its Battery saver.
@@ -32,7 +31,6 @@ import java.util.concurrent.Executors
  */
 class OnboardingActivity : AppCompatActivity() {
 
-    private val io = Executors.newSingleThreadExecutor()
     private lateinit var root: LinearLayout
     private var step = 1
 
@@ -70,23 +68,15 @@ class OnboardingActivity : AppCompatActivity() {
             Build.BRAND.lowercase().contains("redmi") ||
             Build.BRAND.lowercase().contains("poco")
 
-    private fun grantedNow(): Boolean = when (step) {
-        1 -> listenerGranted()
-        2 -> SmsSync.hasReadPermission(this)
-        else -> battGranted()
-    }
+    private fun grantedNow(): Boolean =
+        if (step == 1) listenerGranted() else battGranted()
 
     private fun render() {
         val ctx = this
         root.removeAllViews()
         root.addView(TextView(ctx).apply {
-            text = getString(
-                when (step) {
-                    1 -> R.string.ob_step1
-                    2 -> R.string.ob_step2
-                    else -> R.string.ob_step3
-                }
-            )
+            // ob_step3 holds the battery step label (kept key, new value in 1.3.6).
+            text = getString(if (step == 1) R.string.ob_step1 else R.string.ob_step3)
             textSize = 16f
             setTextColor(Ui.text(ctx))
         })
@@ -104,7 +94,6 @@ class OnboardingActivity : AppCompatActivity() {
         val emoji = when {
             granted -> "👍"
             step == 1 -> "🔔"
-            step == 2 -> "💬"
             else -> "🔋"
         }
         mid.addView(TextView(ctx).apply {
@@ -115,7 +104,6 @@ class OnboardingActivity : AppCompatActivity() {
         val title = when {
             granted -> R.string.ob_great
             step == 1 -> R.string.ob_notif_title
-            step == 2 -> R.string.ob_sms_title
             else -> R.string.ob_batt_title
         }
         mid.addView(TextView(ctx).apply {
@@ -127,10 +115,8 @@ class OnboardingActivity : AppCompatActivity() {
         })
         val desc = when {
             granted && step == 1 -> R.string.ob_notif_done
-            granted && step == 2 -> R.string.ob_sms_done
             granted -> R.string.ob_batt_done
             step == 1 -> R.string.ob_notif_desc
-            step == 2 -> R.string.ob_sms_desc
             else -> R.string.ob_batt_desc
         }
         mid.addView(TextView(ctx).apply {
@@ -141,7 +127,7 @@ class OnboardingActivity : AppCompatActivity() {
             setLineSpacing(0f, 1.25f)
         })
 
-        if (step == 3 && !granted && isXiaomi()) {
+        if (step == 2 && !granted && isXiaomi()) {
             root.addView(TextView(ctx).apply {
                 text = getString(R.string.ob_batt_details)
                 textSize = 14f
@@ -159,7 +145,7 @@ class OnboardingActivity : AppCompatActivity() {
                 }
             })
         }
-        if (step >= 2 && !granted) {
+        if (step == 2 && !granted) {
             root.addView(TextView(ctx).apply {
                 text = getString(R.string.ob_skip)
                 textSize = 14f
@@ -167,7 +153,7 @@ class OnboardingActivity : AppCompatActivity() {
                 setTextColor(Ui.ACCENT)
                 gravity = Gravity.CENTER
                 setPadding(0, Ui.dp(ctx, 14f), 0, Ui.dp(ctx, 14f))
-                setOnClickListener { onSkip() }
+                setOnClickListener { finishOnboarding() }
             })
         }
         root.addView(Button(ctx).apply {
@@ -184,32 +170,12 @@ class OnboardingActivity : AppCompatActivity() {
         })
     }
 
-    private fun onSkip() {
-        if (step == 2) {
-            step = 3
-            render()
-        } else {
-            finishOnboarding()
-        }
-    }
-
     private fun onPrimary(granted: Boolean) {
         when {
             step == 1 && !granted ->
                 startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
             step == 1 -> {
                 step = 2
-                render()
-            }
-            step == 2 && !granted -> requestPermissions(
-                arrayOf(
-                    android.Manifest.permission.READ_SMS,
-                    android.Manifest.permission.RECEIVE_SMS
-                ),
-                77
-            )
-            step == 2 -> {
-                step = 3
                 render()
             }
             !granted -> openBatterySettings()
@@ -243,19 +209,6 @@ class OnboardingActivity : AppCompatActivity() {
         } catch (e: Exception) {
             startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
         }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 77 && SmsSync.hasReadPermission(this)) {
-            val repo = CoreRuntime.repo(this)
-            io.execute { SmsSync.syncFull(this@OnboardingActivity, repo) }
-        }
-        render()
     }
 
     private fun finishOnboarding() {
