@@ -120,4 +120,14 @@ object CoreSettings {
         if (pinned) cur.add(k) else cur.remove(k)
         prefs(ctx).edit().putStringSet(KEY_PIN_CONVS, cur).apply()
     }
+
+    // ---- onboarding (1.3.3) ----
+    private const val K_ONBOARDING = "onboarding_done"
+
+    fun onboardingDone(ctx: Context): Boolean = prefs(ctx).getBoolean(K_ONBOARDING, false)
+
+    fun setOnboardingDone(ctx: Context, done: Boolean) {
+        prefs(ctx).edit().putBoolean(K_ONBOARDING, done).apply()
+    }
+
 }

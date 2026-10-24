@@ -78,4 +78,16 @@
     <string name="clear_selection">Clear</string>
     <string name="selected_summary">%1$d of %2$d apps selected</string>
     <string name="backup_selected">Back up selected</string>
+    <string name="ob_step1">Step 1 of 2: Notification Access</string>
+    <string name="ob_step2">Step 2 of 2: SMS Permission</string>
+    <string name="ob_notif_title">Enable Notification Access Permission</string>
+    <string name="ob_notif_desc">The app needs Notification Access to save every new message the moment it arrives, even if the sender deletes it later.</string>
+    <string name="ob_enable">ENABLE PERMISSION</string>
+    <string name="ob_great">Great!</string>
+    <string name="ob_notif_done">You have successfully enabled the Notification Access permission. Tap Continue for the next step.</string>
+    <string name="ob_continue">CONTINUE</string>
+    <string name="ob_sms_title">Enable SMS Permission</string>
+    <string name="ob_sms_desc">To also save text messages and bank OTP codes, the app needs the SMS permission. It is optional — you can skip and enable it later in Settings.</string>
+    <string name="ob_skip">SKIP AND CONTINUE</string>
+    <string name="ob_sms_done">You have successfully enabled the SMS permission. Tap Continue to get started.</string>
 </resources>

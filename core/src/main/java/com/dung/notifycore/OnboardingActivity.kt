@@ -1,0 +1,171 @@
+package com.dung.notifycore
+
+import android.content.Intent
+import android.graphics.Color
+import android.graphics.Typeface
+import android.os.Bundle
+import android.provider.Settings
+import android.view.Gravity
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationManagerCompat
+import java.util.concurrent.Executors
+
+/**
+ * First-run onboarding (1.3.3, modeled on Unseen Messenger's flow):
+ * Step 1 — notification access (the app's core permission).
+ * Step 2 — SMS permission (optional; skippable, also available in Settings).
+ * Each step flips to a success state once its permission is held.
+ * Shown until CoreSettings.onboardingDone is set; HomeActivity redirects here.
+ */
+class OnboardingActivity : AppCompatActivity() {
+
+    private val io = Executors.newSingleThreadExecutor()
+    private lateinit var root: LinearLayout
+    private var step = 1
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Ui.bg(this@OnboardingActivity))
+        }
+        root.setPadding(
+            Ui.dp(this, 24f),
+            Ui.statusBarHeight(this) + Ui.dp(this, 18f),
+            Ui.dp(this, 24f),
+            Ui.dp(this, 24f)
+        )
+        setContentView(root)
+        render()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::root.isInitialized) render()
+    }
+
+    private fun listenerGranted(): Boolean =
+        NotificationManagerCompat.getEnabledListenerPackages(this).contains(packageName)
+
+    private fun render() {
+        val ctx = this
+        root.removeAllViews()
+        root.addView(TextView(ctx).apply {
+            text = getString(if (step == 1) R.string.ob_step1 else R.string.ob_step2)
+            textSize = 16f
+            setTextColor(Ui.text(ctx))
+        })
+
+        val mid = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f
+            )
+        }
+        root.addView(mid)
+
+        val granted = if (step == 1) listenerGranted() else SmsSync.hasReadPermission(ctx)
+        val emoji = when {
+            granted -> "👍"
+            step == 1 -> "🔔"
+            else -> "💬"
+        }
+        mid.addView(TextView(ctx).apply {
+            text = emoji
+            textSize = 76f
+            gravity = Gravity.CENTER
+        })
+        val title = when {
+            granted -> R.string.ob_great
+            step == 1 -> R.string.ob_notif_title
+            else -> R.string.ob_sms_title
+        }
+        mid.addView(TextView(ctx).apply {
+            text = getString(title)
+            textSize = 23f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(Ui.text(ctx))
+            setPadding(0, Ui.dp(ctx, 28f), 0, 0)
+        })
+        val desc = when {
+            granted && step == 1 -> R.string.ob_notif_done
+            granted -> R.string.ob_sms_done
+            step == 1 -> R.string.ob_notif_desc
+            else -> R.string.ob_sms_desc
+        }
+        mid.addView(TextView(ctx).apply {
+            text = getString(desc)
+            textSize = 14.5f
+            setTextColor(Ui.sub(ctx))
+            setPadding(0, Ui.dp(ctx, 12f), 0, 0)
+            setLineSpacing(0f, 1.25f)
+        })
+
+        if (step == 2 && !granted) {
+            root.addView(TextView(ctx).apply {
+                text = getString(R.string.ob_skip)
+                textSize = 14f
+                typeface = Typeface.DEFAULT_BOLD
+                setTextColor(Ui.ACCENT)
+                gravity = Gravity.CENTER
+                setPadding(0, Ui.dp(ctx, 14f), 0, Ui.dp(ctx, 14f))
+                setOnClickListener { finishOnboarding() }
+            })
+        }
+        root.addView(Button(ctx).apply {
+            text = getString(if (granted) R.string.ob_continue else R.string.ob_enable)
+            textSize = 15f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(Color.WHITE)
+            background = Ui.rounded(Ui.ACCENT, 12f, ctx)
+            setPadding(0, Ui.dp(ctx, 15f), 0, Ui.dp(ctx, 15f))
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            setOnClickListener { onPrimary(granted) }
+        })
+    }
+
+    private fun onPrimary(granted: Boolean) {
+        when {
+            step == 1 && !granted ->
+                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            step == 1 -> {
+                step = 2
+                render()
+            }
+            !granted -> requestPermissions(
+                arrayOf(
+                    android.Manifest.permission.READ_SMS,
+                    android.Manifest.permission.RECEIVE_SMS
+                ),
+                77
+            )
+            else -> finishOnboarding()
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 77 && SmsSync.hasReadPermission(this)) {
+            val repo = CoreRuntime.repo(this)
+            io.execute { SmsSync.syncFull(this@OnboardingActivity, repo) }
+        }
+        render()
+    }
+
+    private fun finishOnboarding() {
+        CoreSettings.setOnboardingDone(this, true)
+        startActivity(Intent(this, HomeActivity::class.java))
+        finish()
+    }
+}

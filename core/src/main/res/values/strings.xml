@@ -78,4 +78,16 @@
     <string name="clear_selection">Bỏ chọn</string>
     <string name="selected_summary">Đang chọn %1$d trong %2$d ứng dụng</string>
     <string name="backup_selected">Sao lưu phần đã chọn</string>
+    <string name="ob_step1">Bước 1/2: Quyền truy cập thông báo</string>
+    <string name="ob_step2">Bước 2/2: Quyền tin nhắn SMS</string>
+    <string name="ob_notif_title">Bật quyền truy cập thông báo</string>
+    <string name="ob_notif_desc">Ứng dụng cần quyền truy cập thông báo để lưu mọi tin nhắn mới ngay khi chúng đến, kể cả khi người gửi thu hồi sau đó.</string>
+    <string name="ob_enable">BẬT QUYỀN</string>
+    <string name="ob_great">Tuyệt vời!</string>
+    <string name="ob_notif_done">Bạn đã bật quyền truy cập thông báo thành công. Bấm Tiếp tục để sang bước tiếp theo.</string>
+    <string name="ob_continue">TIẾP TỤC</string>
+    <string name="ob_sms_title">Bật quyền tin nhắn SMS</string>
+    <string name="ob_sms_desc">Để lưu cả tin nhắn văn bản và mã OTP ngân hàng, ứng dụng cần quyền đọc SMS. Quyền này không bắt buộc — bạn có thể bỏ qua và bật sau trong Cài đặt.</string>
+    <string name="ob_skip">BỎ QUA VÀ TIẾP TỤC</string>
+    <string name="ob_sms_done">Bạn đã bật quyền SMS thành công. Bấm Tiếp tục để bắt đầu.</string>
 </resources>
