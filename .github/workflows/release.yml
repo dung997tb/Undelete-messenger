@@ -1,15 +1,12 @@
 # Undelete Messages — build the release APK and publish it as a GitHub Release.
 #
-# How to use:
-#   1. Put this file at .github/workflows/release.yml in the repo.
-#   2. Add two repository secrets (Settings > Secrets and variables > Actions):
-#        KEYSTORE_B64          base64 of ~/keystores/notify-ecosystem.jks
-#                              (on the nuc:  base64 -w0 ~/keystores/notify-ecosystem.jks)
-#        ECOSYSTEM_STORE_PASS  content of ~/keystores/notify-ecosystem.pass
-#   3. Run it from the Actions tab (workflow_dispatch), or push a tag like v1.3.2.
-#      The release is created with the tag you enter / push, and the APK is
-#      uploaded under the fixed name Undelete-Messages.apk so the README's
-#      "latest download" link keeps working.
+# This file goes to: .github/workflows/release.yml  (replace the whole file)
+# It is the ONLY code the release flow needs. The two secrets below are values
+# from the nuc, not code — add them once under
+# Settings > Secrets and variables > Actions > New repository secret:
+#   ECOSYSTEM_STORE_PASS : output of  cat ~/keystores/notify-ecosystem.pass
+#   KEYSTORE_B64         : output of  base64 -w0 ~/keystores/notify-ecosystem.jks
+# Then run from the Actions tab with a tag like v1.3.1, or push a v* tag.
 
 name: Release APK
 
@@ -17,7 +14,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release tag (e.g. v1.3.2)"
+        description: "Release tag (e.g. v1.3.1)"
         required: true
   push:
     tags:
@@ -40,6 +37,9 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+
+      - name: Install SDK platform 35 and build-tools
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: Set up Gradle 8.10.2
         uses: gradle/actions/setup-gradle@v4
