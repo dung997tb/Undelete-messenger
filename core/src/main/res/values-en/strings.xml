@@ -78,8 +78,8 @@
     <string name="clear_selection">Clear</string>
     <string name="selected_summary">%1$d of %2$d apps selected</string>
     <string name="backup_selected">Back up selected</string>
-    <string name="ob_step1">Step 1 of 2: Notification Access</string>
-    <string name="ob_step2">Step 2 of 2: SMS Permission</string>
+    <string name="ob_step1">Step 1 of 3: Notification Access</string>
+    <string name="ob_step2">Step 2 of 3: SMS Permission</string>
     <string name="ob_notif_title">Enable Notification Access Permission</string>
     <string name="ob_notif_desc">The app needs Notification Access to save every new message the moment it arrives, even if the sender deletes it later.</string>
     <string name="ob_enable">ENABLE PERMISSION</string>
@@ -89,5 +89,10 @@
     <string name="ob_sms_title">Enable SMS Permission</string>
     <string name="ob_sms_desc">To also save text messages and bank OTP codes, the app needs the SMS permission. It is optional — you can skip and enable it later in Settings.</string>
     <string name="ob_skip">SKIP AND CONTINUE</string>
-    <string name="ob_sms_done">You have successfully enabled the SMS permission. Tap Continue to get started.</string>
+    <string name="ob_sms_done">You have successfully enabled the SMS permission. Tap Continue for the last step.</string>
+    <string name="ob_step3">Step 3 of 3: Battery Optimization</string>
+    <string name="ob_batt_title">Disable Battery Optimization</string>
+    <string name="ob_batt_desc">So the system does not kill the app in the background, allow it to ignore battery optimization. Xiaomi/MIUI phones need two extra steps: enable Autostart for the app (the button below opens that exact screen) and set its Battery saver to No restrictions in App info.</string>
+    <string name="ob_batt_details">OPEN APP INFO PAGE</string>
+    <string name="ob_batt_done">The app is exempt from battery optimization. Tap Continue to get started.</string>
 </resources>

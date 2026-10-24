@@ -1,9 +1,13 @@
 package com.dung.notifycore
 
+import android.content.ComponentName
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
 import android.provider.Settings
 import android.view.Gravity
 import android.view.ViewGroup
@@ -15,9 +19,14 @@ import androidx.core.app.NotificationManagerCompat
 import java.util.concurrent.Executors
 
 /**
- * First-run onboarding (1.3.3, modeled on Unseen Messenger's flow):
+ * First-run onboarding (1.3.3, modeled on Unseen Messenger's flow;
+ * step 3 added in 1.3.4):
  * Step 1 — notification access (the app's core permission).
  * Step 2 — SMS permission (optional; skippable, also available in Settings).
+ * Step 3 — battery-optimization exemption (optional; skippable). On Xiaomi
+ *          the primary button opens MIUI's Autostart screen instead (MIUI
+ *          kills background apps independently of the Android whitelist),
+ *          with a secondary link to the App info page for its Battery saver.
  * Each step flips to a success state once its permission is held.
  * Shown until CoreSettings.onboardingDone is set; HomeActivity redirects here.
  */
@@ -51,11 +60,33 @@ class OnboardingActivity : AppCompatActivity() {
     private fun listenerGranted(): Boolean =
         NotificationManagerCompat.getEnabledListenerPackages(this).contains(packageName)
 
+    private fun battGranted(): Boolean =
+        (getSystemService(POWER_SERVICE) as PowerManager)
+            .isIgnoringBatteryOptimizations(packageName)
+
+    private fun isXiaomi(): Boolean =
+        Build.MANUFACTURER.lowercase().contains("xiaomi") ||
+            Build.BRAND.lowercase().contains("xiaomi") ||
+            Build.BRAND.lowercase().contains("redmi") ||
+            Build.BRAND.lowercase().contains("poco")
+
+    private fun grantedNow(): Boolean = when (step) {
+        1 -> listenerGranted()
+        2 -> SmsSync.hasReadPermission(this)
+        else -> battGranted()
+    }
+
     private fun render() {
         val ctx = this
         root.removeAllViews()
         root.addView(TextView(ctx).apply {
-            text = getString(if (step == 1) R.string.ob_step1 else R.string.ob_step2)
+            text = getString(
+                when (step) {
+                    1 -> R.string.ob_step1
+                    2 -> R.string.ob_step2
+                    else -> R.string.ob_step3
+                }
+            )
             textSize = 16f
             setTextColor(Ui.text(ctx))
         })
@@ -69,11 +100,12 @@ class OnboardingActivity : AppCompatActivity() {
         }
         root.addView(mid)
 
-        val granted = if (step == 1) listenerGranted() else SmsSync.hasReadPermission(ctx)
+        val granted = grantedNow()
         val emoji = when {
             granted -> "👍"
             step == 1 -> "🔔"
-            else -> "💬"
+            step == 2 -> "💬"
+            else -> "🔋"
         }
         mid.addView(TextView(ctx).apply {
             text = emoji
@@ -83,7 +115,8 @@ class OnboardingActivity : AppCompatActivity() {
         val title = when {
             granted -> R.string.ob_great
             step == 1 -> R.string.ob_notif_title
-            else -> R.string.ob_sms_title
+            step == 2 -> R.string.ob_sms_title
+            else -> R.string.ob_batt_title
         }
         mid.addView(TextView(ctx).apply {
             text = getString(title)
@@ -94,9 +127,11 @@ class OnboardingActivity : AppCompatActivity() {
         })
         val desc = when {
             granted && step == 1 -> R.string.ob_notif_done
-            granted -> R.string.ob_sms_done
+            granted && step == 2 -> R.string.ob_sms_done
+            granted -> R.string.ob_batt_done
             step == 1 -> R.string.ob_notif_desc
-            else -> R.string.ob_sms_desc
+            step == 2 -> R.string.ob_sms_desc
+            else -> R.string.ob_batt_desc
         }
         mid.addView(TextView(ctx).apply {
             text = getString(desc)
@@ -106,7 +141,25 @@ class OnboardingActivity : AppCompatActivity() {
             setLineSpacing(0f, 1.25f)
         })
 
-        if (step == 2 && !granted) {
+        if (step == 3 && !granted && isXiaomi()) {
+            root.addView(TextView(ctx).apply {
+                text = getString(R.string.ob_batt_details)
+                textSize = 14f
+                typeface = Typeface.DEFAULT_BOLD
+                setTextColor(Ui.ACCENT)
+                gravity = Gravity.CENTER
+                setPadding(0, Ui.dp(ctx, 14f), 0, Ui.dp(ctx, 2f))
+                setOnClickListener {
+                    startActivity(
+                        Intent(
+                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            Uri.parse("package:$packageName")
+                        )
+                    )
+                }
+            })
+        }
+        if (step >= 2 && !granted) {
             root.addView(TextView(ctx).apply {
                 text = getString(R.string.ob_skip)
                 textSize = 14f
@@ -114,7 +167,7 @@ class OnboardingActivity : AppCompatActivity() {
                 setTextColor(Ui.ACCENT)
                 gravity = Gravity.CENTER
                 setPadding(0, Ui.dp(ctx, 14f), 0, Ui.dp(ctx, 14f))
-                setOnClickListener { finishOnboarding() }
+                setOnClickListener { onSkip() }
             })
         }
         root.addView(Button(ctx).apply {
@@ -131,6 +184,15 @@ class OnboardingActivity : AppCompatActivity() {
         })
     }
 
+    private fun onSkip() {
+        if (step == 2) {
+            step = 3
+            render()
+        } else {
+            finishOnboarding()
+        }
+    }
+
     private fun onPrimary(granted: Boolean) {
         when {
             step == 1 && !granted ->
@@ -139,14 +201,47 @@ class OnboardingActivity : AppCompatActivity() {
                 step = 2
                 render()
             }
-            !granted -> requestPermissions(
+            step == 2 && !granted -> requestPermissions(
                 arrayOf(
                     android.Manifest.permission.READ_SMS,
                     android.Manifest.permission.RECEIVE_SMS
                 ),
                 77
             )
+            step == 2 -> {
+                step = 3
+                render()
+            }
+            !granted -> openBatterySettings()
             else -> finishOnboarding()
+        }
+    }
+
+    private fun openBatterySettings() {
+        if (isXiaomi()) {
+            try {
+                startActivity(
+                    Intent().setComponent(
+                        ComponentName(
+                            "com.miui.securitycenter",
+                            "com.miui.permcenter.autostart.AutoStartManagementActivity"
+                        )
+                    )
+                )
+                return
+            } catch (e: Exception) {
+                // MIUI screen moved/absent — fall through to the standard flow.
+            }
+        }
+        try {
+            startActivity(
+                Intent(
+                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                    Uri.parse("package:$packageName")
+                )
+            )
+        } catch (e: Exception) {
+            startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
         }
     }
 

@@ -8,6 +8,7 @@
          listeners, but the SMS provider is readable with user permission. -->
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <!-- Signature-level permissions: only ecosystem-signed apps can hold them. -->
     <permission
