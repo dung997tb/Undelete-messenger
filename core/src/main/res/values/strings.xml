@@ -94,5 +94,5 @@
     <string name="ob_batt_title">Tắt tối ưu pin cho ứng dụng</string>
     <string name="ob_batt_desc">Để hệ thống không tắt ứng dụng khi chạy nền, hãy cho phép ứng dụng bỏ qua tối ưu pin. Riêng máy Xiaomi/MIUI cần thêm 2 việc: bật Tự khởi chạy cho ứng dụng (nút bên dưới mở đúng màn hình đó) và đặt Tiết kiệm pin = Không hạn chế trong Thông tin ứng dụng.</string>
     <string name="ob_batt_details">MỞ THÔNG TIN ỨNG DỤNG</string>
-    <string name="ob_batt_done">Ứng dụng đã được miễn tối ưu pin. Bấm Tiếp tục để bắt đầu.</string>
+    <string name="ob_batt_done">Ứng dụng được chạy nền không bị giới hạn. Bấm Tiếp tục để bắt đầu.</string>
 </resources>
